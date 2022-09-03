@@ -1,0 +1,36 @@
+{
+  "name": "sweetbread",
+  "version": "0.0.1",
+  "description": "A totally vegan helper library for my Cakefiles.",
+  "homepage": "https://github.com/ivanreese/sweetbread",
+  "author": "Ivan Reese (https://ivanish.ca)",
+  "main": "sweetbread.coffee",
+  "dependencies": {
+    "@swc/core": "1.2.246",
+    "autoprefixer": "10.4.8",
+    "chokidar": "3.5.3",
+    "clean-css": "^5.3.1",
+    "coffeescript": "2.7.0",
+    "glob": "8.0.3",
+    "html-minifier": "4.0.0",
+    "node-kit": "0.11.0",
+    "postcss": "8.4.16",
+    "sass": "1.54.8",
+    "ws": "8.8.1"
+  },
+  "engines": {
+    "node": ">= 18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivanreese/sweetbread.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ivanreese/sweetbread/issues"
+  },
+  "license": "ISC",
+  "keywords": [
+    "cake",
+    "coffeescript"
+  ]
+}
