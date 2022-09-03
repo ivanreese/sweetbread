@@ -109,15 +109,16 @@ global.reload = ()->
 
 global.Compilers = {}
 
-Compilers.coffee = (paths, dest)->
+Compilers.coffee = (paths, dest, opts = {minify: true})->
   start = performance.now()
   paths = toArray paths
   contents = readFiles paths
   concatenated = prependFilenames("# %%", paths, contents).join "\n\n\n"
   try
-    compiled = coffeescript.compile concatenated, bare: true#, inlineMap: true
-    compressed = swc.transformSync(compiled, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: We don't yet handle errors during minification
-    fs.writeFileSync dest, compressed
+    result = coffeescript.compile concatenated, bare: true#, inlineMap: true
+    if opts.minify
+      result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: We don't yet handle errors during minification
+    fs.writeFileSync dest, result
     log "Compiled #{dest} " + blue "(#{Math.ceil performance.now() - start}ms)"
   catch outerError
     # We hit an error while compiling. To improve the error message, try to compile each
@@ -144,25 +145,27 @@ htmlminOptions =
   sortAttributes: true
   sortClassName: true
 
-Compilers.html = (paths, dest)->
+Compilers.html = (paths, dest, opts = {minify: true})->
   start = performance.now()
   paths = toArray paths
   contents = readFiles paths
   contents = prependFilenames("<!-- %% -->", paths, contents) if contents.length > 1
-  compiled = contents.join "\n\n"
-  compressed = htmlmin.minify compiled, htmlminOptions
-  fs.writeFileSync dest, compressed
+  result = contents.join "\n\n"
+  if opts.minify
+    result = htmlmin.minify result, htmlminOptions
+  fs.writeFileSync dest, result
   log "Compiled #{dest} " + blue "(#{Math.ceil performance.now() - start}ms)"
 
-Compilers.kit = (path, dest)-> # Note — just 1 file at a time
+Compilers.kit = (path, dest, opts = {minify: true})-> # Note — just 1 file at a time
   start = performance.now()
-  compiled = kit path
-  compressed = htmlmin.minify compiled, htmlminOptions
-  fs.writeFileSync dest, compressed
+  result = kit path
+  if opts.minify
+    result = htmlmin.minify result, htmlminOptions
+  fs.writeFileSync dest, result
   log "Compiled #{dest} " + blue "(#{Math.ceil performance.now() - start}ms)"
 
 defaultBrowserslist = "last 5 Chrome versions, last 5 ff versions, last 3 Safari versions, last 3 iOS versions"
-Compilers.scss = (paths, dest, opts = {})->
+Compilers.scss = (paths, dest, opts = {minify: true})->
   start = performance.now()
   paths = toArray paths
   contents = readFiles paths
@@ -172,8 +175,10 @@ Compilers.scss = (paths, dest, opts = {})->
     compiled = sass.compileString(concatenated, sourceMap: false).css
     processed = postcss(plugins).process compiled
     log red warn.toString() for warning in processed.warnings()
-    compressed = new CleanCSS().minify processed.css
-    fs.writeFileSync dest, compressed.styles
+    result = processed.css
+    if opts.minify
+      result = new CleanCSS().minify(result).styles
+    fs.writeFileSync dest, result
     log "Compiled #{dest} " + blue "(#{Math.ceil performance.now() - start}ms)"
   catch outerError
     # We hit an error while compiling. To improve the error message, we'll try to compile each
