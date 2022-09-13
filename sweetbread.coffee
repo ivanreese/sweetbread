@@ -2,11 +2,13 @@ autoprefixer = require "autoprefixer"
 chokidar = require "chokidar"
 CleanCSS = require "clean-css"
 coffeescript = require "coffeescript"
+dns = require "dns"
 fs = require "fs"
 glob = require "glob"
 http = require "http"
 htmlmin = require "html-minifier"
 kit = require "node-kit"
+os = require "os"
 path = require "path"
 postcss = require "postcss"
 sass = require "sass"
@@ -106,7 +108,8 @@ global.serve = (root)->
   server.listen 333
   wss = new ws.Server noServer: true
   server.on "upgrade", (r,s,h)-> wss.handleUpgrade r,s,h, (ws)-> liveServer = ws
-  log green "http://localhost:333"
+  dns.lookup os.hostname(), (err, address)->
+    log green "http://#{address}:333"
 
 global.reload = ()->
   liveServer?.send "reload"
