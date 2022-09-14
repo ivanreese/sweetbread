@@ -83,6 +83,9 @@ global.mkdir = (filePath)->
 
 # Fire up a simple local http server, with a websocket for live-reload
 mimeTypes = css:"text/css", gif:"image/gif", html:"text/html", jpg:"image/jpg", js:"text/javascript", json:"application/json", mp4:"video/mp4", png:"image/png", svg:"image/svg+xml", wasm:"application/wasm", woff:"application/font-woff"
+address = os.networkInterfaces().en0?.filter((i)-> i.family is "IPv4")[0]?.address or "localhost"
+port = 333
+reloadScript = """<script>(new WebSocket("ws://#{address}:#{port}")).onmessage = e => { if (e.data == "reload") location.reload(true) }</script>"""
 server = null
 liveServer = null
 respond = (res, code, body, format, headers)-> res.writeHead code, headers; res.end body, format
@@ -102,13 +105,12 @@ global.serve = (root)->
     fs.readFile filePath, "utf8", (error, content)->
       return respond res, 404 if error?.code is "ENOENT"
       return respond res, 500, error.code if error?
-      if ext is "html" then content = content.replace "</head>", """  <script>(new WebSocket("ws://localhost:333")).onmessage = e => { if (e.data == "reload") location.reload(true) }</script>\n</head>"""
+      if ext is "html" then content = content.replace "</head>", "  #{reloadScript}\n</head>"
       respond res, 200, content, "utf-8", "Content-Type": contentType
-  server.listen 333
+  server.listen port
   wss = new ws.Server noServer: true
   server.on "upgrade", (r,s,h)-> wss.handleUpgrade r,s,h, (ws)-> liveServer = ws
-  address = os.networkInterfaces().en0?.filter((i)-> i.family is "IPv4")[0]?.address or "localhost"
-  log green "http://#{address}:333"
+  log green "http://#{address}:#{port}"
 
 global.reload = ()->
   liveServer?.send "reload"
