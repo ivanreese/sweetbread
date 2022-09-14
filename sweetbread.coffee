@@ -2,7 +2,6 @@ autoprefixer = require "autoprefixer"
 chokidar = require "chokidar"
 CleanCSS = require "clean-css"
 coffeescript = require "coffeescript"
-dns = require "dns"
 fs = require "fs"
 glob = require "glob"
 http = require "http"
@@ -108,8 +107,8 @@ global.serve = (root)->
   server.listen 333
   wss = new ws.Server noServer: true
   server.on "upgrade", (r,s,h)-> wss.handleUpgrade r,s,h, (ws)-> liveServer = ws
-  dns.lookup os.hostname(), (err, address)->
-    log green "http://#{address}:333"
+  address = os.networkInterfaces().en0?.filter((i)-> i.family is "IPv4")[0]?.address or "localhost"
+  log green "http://#{address}:333"
 
 global.reload = ()->
   liveServer?.send "reload"
