@@ -88,7 +88,7 @@ port = 333
 reloadScript = """<script>(new WebSocket("ws://#{address}:#{port}")).onmessage = e => { if (e.data == "reload") location.reload(true) }</script>"""
 server = null
 liveServer = null
-respond = (res, code, body, format, headers)-> res.writeHead code, headers; res.end body, format
+respond = (res, code, body, headers)-> res.writeHead code, headers; res.end body
 global.serve = (root)->
   return if server?
   server = http.createServer (req, res)->
@@ -102,11 +102,12 @@ global.serve = (root)->
         ext = "html"
     contentType = mimeTypes[ext]
     return respond res, 415 unless contentType?
-    fs.readFile filePath, "utf8", (error, content)->
+    encoding = if ext is "html" then "utf8" else null
+    fs.readFile filePath, encoding, (error, content)->
       return respond res, 404 if error?.code is "ENOENT"
       return respond res, 500, error.code if error?
       if ext is "html" then content = content.replace "</head>", "  #{reloadScript}\n</head>"
-      respond res, 200, content, "utf-8", "Content-Type": contentType
+      respond res, 200, content, "Content-Type": contentType
   server.listen port
   wss = new ws.Server noServer: true
   server.on "upgrade", (r,s,h)-> wss.handleUpgrade r,s,h, (ws)-> liveServer = ws
