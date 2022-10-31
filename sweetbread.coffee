@@ -217,7 +217,7 @@ Compilers.scss = (paths, dest, opts = {minify: false, quiet: false, browserslist
 
 Compilers.static = (path, dest, opts = {quiet: false})-> # Note — just 1 file at a time
   start = performance.now()
-  fs.writeFileSync dest, readFile path
+  fs.copyFileSync path, dest
   log "Compiled #{dest}" + duration start unless opts.quiet
   return true # signal success
 
