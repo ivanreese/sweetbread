@@ -127,7 +127,7 @@ Compilers.coffee = (paths, dest, opts = {minify: false, quiet: false})->
   contents = readFiles paths
   concatenated = prependFilenames("# %%", paths, contents).join "\n\n\n"
   try
-    result = coffeescript.compile concatenated, bare: true, inlineMap: !minify
+    result = coffeescript.compile concatenated, bare: true, inlineMap: !opts.minify
     if opts.minify
       result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: We don't yet handle errors during minification
     fs.writeFileSync dest, result
