@@ -9,6 +9,7 @@ htmlmin = require "html-minifier"
 kit = require "node-kit"
 os = require "os"
 path = require "path"
+PleaseReload = require "please-reload"
 postcss = require "postcss"
 sass = require "sass"
 swc = require "@swc/core"
@@ -81,40 +82,11 @@ global.mkdir = (filePath)->
 
 # LIVE SERVER #####################################################################################
 
-# Fire up a simple local http server, with a websocket for live-reload
-mimeTypes = css:"text/css", gif:"image/gif", html:"text/html", jpg:"image/jpg", js:"text/javascript", json:"application/json", mp4:"video/mp4", png:"image/png", svg:"image/svg+xml", wasm:"application/wasm", woff:"application/font-woff"
-address = os.networkInterfaces().en0?.filter((i)-> i.family is "IPv4")[0]?.address or "localhost"
-port = 333
-reloadScript = """<script>(new WebSocket("ws://#{address}:#{port}")).onmessage = e => { if (e.data == "reload") location.reload(true) }</script>"""
-server = null
-liveServer = null
-respond = (res, code, body, headers)-> res.writeHead code, headers; res.end body
 global.serve = (root)->
-  return if server?
-  server = http.createServer (req, res)->
-    filePath = root + req.url
-    ext = path.extname(filePath).toLowerCase()[1..]
-    if ext is ""
-      if filePath[-1..] isnt "/"
-        return respond res, 302, null, null, location: req.url + "/"
-      else
-        filePath += "/index.html"
-        ext = "html"
-    contentType = mimeTypes[ext]
-    return respond res, 415 unless contentType?
-    encoding = if ext is "html" then "utf8" else null
-    fs.readFile filePath, encoding, (error, content)->
-      return respond res, 404 if error?.code is "ENOENT"
-      return respond res, 500, error.code if error?
-      if ext is "html" then content = content.replace "</head>", "  #{reloadScript}\n</head>"
-      respond res, 200, content, "Content-Type": contentType
-  server.listen port
-  wss = new ws.Server noServer: true
-  server.on "upgrade", (r,s,h)-> wss.handleUpgrade r,s,h, (ws)-> liveServer = ws
-  log green "http://#{address}:#{port}"
+  PleaseReload.serve root
 
 global.reload = ()->
-  liveServer?.send "reload"
+  PleaseReload.reload()
 
 
 # COMPILERS #######################################################################################

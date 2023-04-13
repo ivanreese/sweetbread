@@ -1,6 +1,6 @@
 {
   "name": "sweetbread",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "A totally vegan helper library for my Cakefiles.",
   "author": "Ivan Reese (https://ivanish.ca)",
   "main": "sweetbread.coffee",
@@ -13,6 +13,7 @@
     "glob": "8.0.3",
     "html-minifier": "4.0.0",
     "node-kit": "0.11.0",
+    "please-reload": "^1.0.0",
     "postcss": "8.4.18",
     "sass": "1.55.0",
     "ws": "8.10.0"
