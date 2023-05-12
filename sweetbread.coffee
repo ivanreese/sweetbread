@@ -161,7 +161,7 @@ Compilers.scss = (paths, dest, opts = {minify: false, quiet: false, browserslist
   try
     compiled = sass.compileString(concatenated, sourceMap: false).css
     processed = postcss(plugins).process compiled
-    log red warn.toString() for warning in processed.warnings()
+    log red warning.toString() for warning in processed.warnings()
     result = processed.css
     if opts.minify
       result = new CleanCSS().minify(result).styles
