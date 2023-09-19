@@ -2,6 +2,7 @@ autoprefixer = require "autoprefixer"
 chokidar = require "chokidar"
 CleanCSS = require "clean-css"
 coffeescript = require "coffeescript"
+civet = require "@danielx/civet"
 fs = require "fs"
 glob = require "glob"
 http = require "http"
@@ -92,6 +93,16 @@ global.reload = ()->
 # COMPILERS #######################################################################################
 
 global.Compilers = {}
+
+Compilers.civet = (path, dest, opts = {minify: false, quiet: false})-> # Note — just 1 file at a time
+  start = performance.now()
+  contents = readFile path
+  result = civet.compile contents, inlineMap: true, js: true # TODO: No error handling
+  if opts.minify
+    result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: We don't yet handle errors during minification
+  fs.writeFileSync dest, result
+  log "Compiled #{dest}" + duration start unless opts.quiet
+  return true # signal success
 
 Compilers.coffee = (paths, dest, opts = {minify: false, quiet: false})->
   start = performance.now()
