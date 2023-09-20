@@ -94,10 +94,12 @@ global.reload = ()->
 
 global.Compilers = {}
 
-Compilers.civet = (path, dest, opts = {minify: false, quiet: false})-> # Note — just 1 file at a time
+Compilers.civet = (paths, dest, opts = {minify: false, quiet: false})->
   start = performance.now()
-  contents = readFile path
-  result = civet.compile contents, inlineMap: true, js: true # TODO: No error handling
+  paths = toArray paths
+  contents = readFiles paths
+  concatenated = prependFilenames("# %%", paths, contents).join "\n\n\n"
+  result = civet.compile concatenated, inlineMap: true, js: true # TODO: No error handling
   if opts.minify
     result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: We don't yet handle errors during minification
   fs.writeFileSync dest, result
