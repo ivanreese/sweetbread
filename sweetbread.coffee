@@ -98,8 +98,8 @@ Compilers.civet = (paths, dest, opts = {minify: false, quiet: false})->
   start = performance.now()
   paths = toArray paths
   contents = readFiles paths
-  concatenated = prependFilenames("# %%", paths, contents).join "\n\n\n"
-  result = civet.compile concatenated, inlineMap: true, js: true # TODO: No error handling
+  concatenated = prependFilenames("// %%", paths, contents).join "\n\n\n"
+  result = civet.compile concatenated, js: true # TODO: No error handling
   if opts.minify
     result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: We don't yet handle errors during minification
   fs.writeFileSync dest, result
