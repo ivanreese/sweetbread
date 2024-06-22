@@ -17,9 +17,9 @@ global.glob = (patterns)-> unique toArray(patterns).flatMap (pattern)-> globSync
 # Files
 global.exists = (path)-> fs.existsSync path
 global.mkdir = (path)-> fs.mkdirSync path, recursive: true
+global.ensureDir = (path)-> mkdir(path.split("/")[0...-1].join("/")); path
 global.read = (path)-> if exists path then fs.readFileSync(path).toString()
 global.rm = (pattern)-> fs.rmSync path, recursive: true for path in glob pattern
-ensureDir = (path)-> mkdir(path.split("/")[0...-1].join("/")); path
 global.copy = (path, dest)-> fs.copyFileSync path, ensureDir dest
 global.write = (path, text)-> fs.writeFileSync ensureDir(path), text
 
@@ -36,10 +36,11 @@ do ()->
 # Print msg with a timestamp
 global.log = (msg)-> console.log yellow(new Date().toLocaleTimeString "en-US", hour12: false) + blue(" → ") + msg
 
-duration = (start, color = blue)-> color "(#{Math.round(10 * (performance.now() - start)) / 10}ms)"
+# Loggable time since start
+global.duration = (start, color = blue)-> color "(#{Math.round(10 * (performance.now() - start)) / 10}ms)"
 
 # Log duration when tasks finish
-announce = (start, count, type, dest)->
+global.announce = (start, count, type, dest)->
   suffix = if count is 1 then "" else "s"
   log "Compiled #{count} #{type} file#{suffix} to #{dest} " + duration start
 
@@ -62,6 +63,8 @@ global.watch = (paths, ...actions)->
   .on "all", ()->
     clearTimeout timeout
     timeout = setTimeout run, 10
+
+
 
 global.Compilers = {}
 
