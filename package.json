@@ -5,13 +5,13 @@
   "author": "Ivan Reese (https://ivanish.ca)",
   "main": "sweetbread.coffee",
   "dependencies": {
-    "@danielx/civet": "^0.6.84",
-    "@swc/core": "^1.4.8",
+    "@danielx/civet": "^0.7.12",
+    "@swc/core": "^1.6.5",
     "chokidar": "^3.6.0",
     "coffeescript": "^2.7.0",
-    "please-reload": "latest",
-    "typescript": "^5.4.3",
-    "ws": "^8.16.0"
+    "please-reload": "^1.3.0",
+    "typescript": "^5.5.2",
+    "ws": "^8.17.1"
   },
   "repository": {
     "type": "git",
