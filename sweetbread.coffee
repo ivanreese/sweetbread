@@ -1,6 +1,6 @@
 chokidar = require "chokidar"
 coffeescript = require "coffeescript"
-civet = require "@danielx/civet"
+civetCompiler = require "@danielx/civet"
 fs = require "fs"
 globSync = require("glob").sync
 PleaseReload = require "please-reload"
@@ -8,11 +8,17 @@ swc = require "@swc/core"
 {exec} = require "child_process"
 
 # Helpers
-toArray = (input)-> [].concat input
-unique = (arr)-> Array.from new Set arr
+global.join = (parts, sep = "\n")-> parts.join sep
+global.toArray = (input)-> [].concat(input).flat Infinity
+global.unique = (arr)-> Array.from new Set arr
 
 # Extend glob to support arrays of patterns
-global.glob = (patterns)-> unique toArray(patterns).flatMap (pattern)-> globSync pattern
+global.glob = (...patterns)-> unique toArray(patterns).flatMap (pattern)-> globSync pattern
+
+# A tiny DSL for string replacement
+global.replace = (str, kvs)->
+  str = str.replace k, v for k, v of kvs
+  str
 
 # Files
 global.exists = (path)-> fs.existsSync path
@@ -21,7 +27,11 @@ global.ensureDir = (path)-> mkdir(path.split("/")[0...-1].join("/")); path
 global.read = (path)-> if exists path then fs.readFileSync(path).toString()
 global.rm = (pattern)-> fs.rmSync path, recursive: true for path in glob pattern
 global.copy = (path, dest)-> fs.copyFileSync path, ensureDir dest
-global.write = (path, text)-> fs.writeFileSync ensureDir(path), text
+global.write = (dest, text)-> fs.writeFileSync ensureDir(dest), text
+
+# Higher level file helpers
+global.readAll = (...patterns)-> glob(patterns).map(read)
+global.concat = (...files)-> join toArray(files), "\n\n"
 
 # Server
 global.serve = PleaseReload.serve
@@ -36,20 +46,14 @@ do ()->
 # Print msg with a timestamp
 global.log = (msg)-> console.log yellow(new Date().toLocaleTimeString "en-US", hour12: false) + blue(" → ") + msg
 
-# Loggable time since start
+# Log-able time since start
 global.duration = (start, color = blue)-> color "(#{Math.round(10 * (performance.now() - start)) / 10}ms)"
 
-# Log duration when tasks finish
-global.announce = (start, count, type, dest)->
-  suffix = if count is 1 then "" else "s"
-  log "Compiled #{count} #{type} file#{suffix} to #{dest} " + duration start
-
-# Errors should show a notification and beep
+# Errors push a notification and beep
 global.err = (title, msg)->
   exec "osascript -e 'display notification \"Error\" with title \"#{title}\"'"
   exec "osascript -e beep"
   log msg
-  false # signal that something failed
 
 # Watch paths, and run actions whenever those paths are touched
 global.watch = (paths, ...actions)->
@@ -64,53 +68,24 @@ global.watch = (paths, ...actions)->
     clearTimeout timeout
     timeout = setTimeout run, 10
 
+# Wrap some timing, error handling, and logging around other work
+global.compile = (type, ...patterns, process)->
+  try
+    start = performance.now()
+    if patterns.length
+      files = glob patterns
+      process file for file in files # Note: process should do side-effects, like writing results to disk
+      log join ["Compiled", type, magenta("(#{files.length})"), duration(start)], " "
+    else
+      process()
+      log join ["Compiled", type, duration(start)], " "
+  catch msg
+    err type, msg
 
+# CODE -> CODE
+global.civet = (code)-> civetCompiler.compile code, sync: true, js: true
+global.coffee = (code)-> coffeescript.compile code, bare: true, inlineMap: true
+global.minify = (js)-> swc.transformSync(js, minify: true, jsc: minify: compress: true, mangle: true).code
 
-global.Compilers = {}
-
-Compilers.civet = (pattern, src, dest, opts = {minify: false, quiet: false})->
-  start = performance.now()
-  paths = glob pattern
-  for path in paths
-    result = civet.compile read(path), sync: true, js: true # TODO: handle errors
-    if opts.minify
-      result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: handle errors
-    write path.replace(src, dest).replace(".civet", ".js").replace(".ts", ".js"), result
-  announce start, paths.length, "civet", dest unless opts.quiet
-  true
-
-Compilers.coffee = (pattern, dest, opts = {minify: false, quiet: false})->
-  start = performance.now()
-  paths = glob pattern
-  for path in paths
-    try
-      result = coffeescript.compile path, bare: true, inlineMap: !opts.minify
-      if opts.minify
-        result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: handle errors
-      fs.writeFileSync dest, result
-    catch err
-      [msg, mistake, pointer] = err.toString().split "\n"
-      [_, msg] = msg.split ": error: "
-      num = err.location.first_line + " "
-      pointer = pointer.padStart pointer.length + num.length
-      return err "CoffeeScript", [red(paths[i]) + blue(" → ") + msg, "", blue(num) + mistake, pointer].join "\n"
-  announce start, paths.length, "coffee", dest unless opts.quiet
-  true
-
-Compilers.copy = (pattern, src, dest, opts = {quiet: false})->
-  start = performance.now()
-  paths = glob pattern
-  copy path, path.replace src, dest for path in paths
-  announce start, paths.length, "static", dest unless opts.quiet
-  true
-
-Compilers.typescript = (pattern, src, dest, opts = {minify: false, quiet: false})->
-  start = performance.now()
-  paths = glob pattern
-  for path in paths
-    result = swc.transformSync(read(path), filename: path, jsc: target: "esnext").code # TODO: handle errors
-    if opts.minify
-      result = swc.transformSync(result, minify: true, jsc: minify: compress: true, mangle: true).code # TODO: handle errors
-    write path.replace(src, dest).replace(".ts", ".js"), result
-  announce start, paths.length, "typescript", dest unless opts.quiet
-  true
+# PATH -> CODE
+global.typescript = (path)-> swc.transformSync(read(path), filename: path, jsc: target: "esnext").code
