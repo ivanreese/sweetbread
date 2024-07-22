@@ -1,3 +1,4 @@
+child_process = require "child_process"
 chokidar = require "chokidar"
 coffeescript = require "coffeescript"
 civetCompiler = require "@danielx/civet"
@@ -5,12 +6,13 @@ fs = require "fs"
 globSync = require("glob").sync
 PleaseReload = require "please-reload"
 swc = require "@swc/core"
-{exec} = require "child_process"
 
 # Helpers
 global.join = (parts, sep = "\n")-> parts.join sep
 global.toArray = (input)-> [].concat(input).flat Infinity
 global.unique = (arr)-> Array.from new Set arr
+global.exec = (cmd, opts = {stdio: "inherit"})-> child_process.exec cmd, opts
+global.execSync = (cmd, opts = {stdio: "inherit"})-> child_process.execSync cmd, opts
 
 # Extend glob to support arrays of patterns
 global.glob = (...patterns)-> unique toArray(patterns).flatMap (pattern)-> globSync pattern
