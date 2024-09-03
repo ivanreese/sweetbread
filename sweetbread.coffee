@@ -10,12 +10,13 @@ swc = require "@swc/core"
 # Helpers
 global.join = (parts, sep = "\n")-> parts.join sep
 global.toArray = (input)-> [].concat(input).flat Infinity
+global.toSorted = (arr)-> arr.toSorted()
 global.unique = (arr)-> Array.from new Set arr
 global.exec = (cmd, opts = {stdio: "inherit"})-> child_process.exec cmd, opts
 global.execSync = (cmd, opts = {stdio: "inherit"})-> child_process.execSync cmd, opts
 
 # Extend glob to support arrays of patterns
-global.glob = (...patterns)-> unique toArray(patterns).flatMap (pattern)-> globSync pattern
+global.glob = (...patterns)-> toSorted unique toArray(patterns).flatMap (pattern)-> globSync pattern
 
 # A tiny DSL for string replacement
 global.replace = (str, kvs)->
