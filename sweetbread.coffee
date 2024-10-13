@@ -26,7 +26,7 @@ global.replace = (str, kvs)->
 # Files
 global.exists = (path)-> fs.existsSync path
 global.mkdir = (path)-> fs.mkdirSync path, recursive: true
-global.ensureDir = (path)-> mkdir(path.split("/")[0...-1].join("/")); path
+global.ensureDir = (path)-> mkdir(path.split("/")[0...-1].join("/") || "."); path
 global.read = (path)-> if exists path then fs.readFileSync(path).toString()
 global.rm = (pattern)-> fs.rmSync path, recursive: true for path in glob pattern
 global.copy = (path, dest)-> fs.copyFileSync path, ensureDir dest
