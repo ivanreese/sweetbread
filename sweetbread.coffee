@@ -20,7 +20,7 @@ global.glob = (...patterns)-> toSorted unique toArray(patterns).flatMap (pattern
 
 # A tiny DSL for string replacement
 global.replace = (str, kvs)->
-  str = str.replace k, v for k, v of kvs
+  str = str.replaceAll k, v for k, v of kvs
   str
 
 # Files
@@ -53,13 +53,14 @@ global.log = (msg)-> console.log yellow(new Date().toLocaleTimeString "en-US", h
 global.duration = (start, color = blue)-> color "(#{Math.round(10 * (performance.now() - start)) / 10}ms)"
 
 # Errors push a notification and beep
-global.err = (title, msg)->
+global.err = (title, msg = title)->
   exec "osascript -e 'display notification \"Error\" with title \"#{title}\"'"
   exec "osascript -e beep"
   log msg
 
 # Watch paths, and run actions whenever those paths are touched
 global.watch = (paths, ...actions)->
+  err("watch doesn't support globs!") if toArray(paths).join("").indexOf("*") > 0
   dotfiles = /(^|[\/\\])\../
   timeout = null
   run = ()->
