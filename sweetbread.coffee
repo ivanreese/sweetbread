@@ -1,11 +1,8 @@
-child_process = require "child_process"
+child_process = require "node:child_process"
 chokidar = require "chokidar"
-coffeescript = require "coffeescript"
-civetCompiler = require "@danielx/civet"
-fs = require "fs"
+fs = require "node:fs"
 globSync = require("glob").sync
 PleaseReload = require "please-reload"
-swc = require "@swc/core"
 
 # Helpers
 global.join = (parts, sep = "\n")-> parts.join sep
@@ -85,11 +82,3 @@ global.compile = (type, ...patterns, process)->
       log join ["Compiled", type, duration(start)], " "
   catch msg
     err type, msg
-
-# CODE -> CODE
-global.civet = (code)-> civetCompiler.compile code, sync: true, js: true
-global.coffee = (code)-> coffeescript.compile code, bare: true, inlineMap: true
-global.minify = (js)-> swc.transformSync(js, minify: true, jsc: minify: compress: true, mangle: true).code
-
-# PATH -> CODE
-global.typescript = (path)-> swc.transformSync(read(path), filename: path, jsc: target: "esnext").code
