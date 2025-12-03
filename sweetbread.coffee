@@ -36,6 +36,7 @@ global.concat = (...files)-> join toArray(files), "\n\n"
 # Server
 global.serve = PleaseReload.serve
 global.reload = PleaseReload.reload
+global.mimeTypes = PleaseReload.mimeTypes
 
 # Colors
 do ()->
